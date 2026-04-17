@@ -1,13 +1,1100 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MFAB // SOC Analyst // Shadowrun Decker</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #9d00ff;
+    --purple-bright: #c44dff;
+    --purple-dim: #5a0099;
+    --green: #00ff41;
+    --green-dim: #00aa2b;
+    --bg: #07070f;
+    --bg-surface: #0e0e1a;
+    --bg-card: #12121f;
+    --text: #d0d0e8;
+    --text-muted: #6a6a8a;
+    --border: #1e1e35;
+  }
 
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    cursor: crosshair;
+    overflow-x: hidden;
+  }
+
+  /* SCANLINES */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* MATRIX CANVAS */
+  #matrix-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(7,7,15,0.92);
+    border-bottom: 1px solid var(--purple-dim);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    backdrop-filter: blur(8px);
+  }
+
+  .nav-brand {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 1.1rem;
+    color: var(--purple-bright);
+    text-shadow: 0 0 20px var(--purple);
+    letter-spacing: 0.15em;
+    text-decoration: none;
+  }
+
+  .nav-brand span { color: var(--green); }
+
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 2rem;
+  }
+
+  nav ul a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  nav ul a:hover { color: var(--green); }
+
+  .nav-status {
+    font-size: 0.7rem;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* SECTIONS */
+  section {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 6rem 2rem 4rem;
+  }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 8rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .hero-prefix {
+    font-size: 0.8rem;
+    color: var(--green);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .hero-name {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: clamp(2.5rem, 8vw, 5.5rem);
+    line-height: 1;
+    color: #fff;
+    position: relative;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 40px var(--purple);
+  }
+
+  .hero-name::before {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0;
+    color: var(--purple-bright);
+    clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%);
+    transform: translateX(-2px);
+    opacity: 0;
+    animation: glitch 4s infinite;
+  }
+
+  .hero-name::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0;
+    color: var(--green);
+    clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%);
+    transform: translateX(2px);
+    opacity: 0;
+    animation: glitch 4s infinite 0.1s;
+  }
+
+  @keyframes glitch {
+    0%, 90%, 100% { opacity: 0; transform: translateX(0); }
+    92% { opacity: 0.8; transform: translateX(-3px); }
+    94% { opacity: 0; }
+    96% { opacity: 0.6; transform: translateX(3px); }
+    98% { opacity: 0; }
+  }
+
+  .hero-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+    color: var(--purple-bright);
+    letter-spacing: 0.2em;
+    margin-bottom: 2rem;
+    text-shadow: 0 0 15px var(--purple);
+  }
+
+  .hero-tagline {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+    max-width: 600px;
+    margin-bottom: 3rem;
+    border-left: 2px solid var(--green);
+    padding-left: 1.5rem;
+  }
+
+  .hero-tagline .typing {
+    color: var(--green);
+  }
+
+  .hero-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.75rem 1.75rem;
+    border: 1px solid;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: crosshair;
+    display: inline-block;
+  }
+
+  .btn-primary {
+    border-color: var(--purple-bright);
+    color: var(--purple-bright);
+    background: rgba(157,0,255,0.08);
+  }
+
+  .btn-primary:hover {
+    background: rgba(157,0,255,0.2);
+    box-shadow: 0 0 25px rgba(157,0,255,0.4);
+    color: #fff;
+  }
+
+  .btn-secondary {
+    border-color: var(--green-dim);
+    color: var(--green);
+    background: rgba(0,255,65,0.05);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(0,255,65,0.12);
+    box-shadow: 0 0 25px rgba(0,255,65,0.3);
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .stat-item { text-align: left; }
+
+  .stat-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--purple-bright);
+    text-shadow: 0 0 15px var(--purple);
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* SECTION HEADERS */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+  }
+
+  .section-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    color: var(--green);
+    letter-spacing: 0.2em;
+  }
+
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 20px var(--purple);
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--purple-dim), transparent);
+  }
+
+  /* ABOUT */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+
+  .about-text p {
+    font-size: 0.9rem;
+    line-height: 1.9;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+
+  .about-text p span { color: var(--green); }
+
+  .about-specs {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--purple);
+    padding: 1.5rem;
+  }
+
+  .spec-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+
+  .spec-row:last-child { border-bottom: none; }
+  .spec-key { color: var(--text-muted); }
+  .spec-val { color: var(--green); text-align: right; }
+  .spec-val.purple { color: var(--purple-bright); }
+
+  /* SKILLS */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .skill-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    transition: border-color 0.2s;
+  }
+
+  .skill-card:hover { border-color: var(--purple-dim); }
+
+  .skill-card-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    color: var(--purple-bright);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .skill-card-title::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .skill-item {
+    margin-bottom: 1rem;
+  }
+
+  .skill-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .skill-name { color: var(--text); }
+  .skill-pct { color: var(--text-muted); }
+
+  .skill-bar {
+    height: 3px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .skill-fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--purple), var(--green));
+    box-shadow: 0 0 8px var(--purple);
+    transition: width 1.5s ease;
+    width: 0;
+  }
+
+  /* ROADMAP */
+  .roadmap {
+    position: relative;
+    padding-left: 2rem;
+  }
+
+  .roadmap::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--purple), var(--green-dim), transparent);
+  }
+
+  .roadmap-item {
+    position: relative;
+    padding: 0 0 3rem 2rem;
+  }
+
+  .roadmap-dot {
+    position: absolute;
+    left: -6px; top: 4px;
+    width: 13px; height: 13px;
+    border: 2px solid var(--purple);
+    background: var(--bg);
+    box-shadow: 0 0 12px var(--purple);
+  }
+
+  .roadmap-dot.active {
+    background: var(--green);
+    border-color: var(--green);
+    box-shadow: 0 0 15px var(--green);
+  }
+
+  .roadmap-dot.done {
+    background: var(--purple);
+    border-color: var(--purple-bright);
+  }
+
+  .roadmap-phase {
+    font-size: 0.7rem;
+    color: var(--green);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .roadmap-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
+
+  .roadmap-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    max-width: 600px;
+  }
+
+  .roadmap-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .tag {
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid;
+    text-transform: uppercase;
+  }
+
+  .tag-purple { border-color: var(--purple-dim); color: var(--purple-bright); }
+  .tag-green { border-color: var(--green-dim); color: var(--green); }
+  .tag-muted { border-color: var(--border); color: var(--text-muted); }
+
+  /* PROJECTS */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .project-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 1.75rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .project-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--purple), var(--green));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .project-card:hover {
+    border-color: var(--purple-dim);
+    transform: translateY(-3px);
+  }
+
+  .project-card:hover::before { opacity: 1; }
+
+  .project-type {
+    font-size: 0.68rem;
+    color: var(--green);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .project-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    color: #fff;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .project-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+  }
+
+  .project-link {
+    font-size: 0.75rem;
+    color: var(--purple-bright);
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s;
+  }
+
+  .project-link:hover { color: var(--green); }
+  .project-link::after { content: '→'; }
+
+  /* CERTS */
+  .cert-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .cert-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+  }
+
+  .cert-name { color: var(--text); }
+
+  .cert-status {
+    font-size: 0.68rem;
+    padding: 0.2rem 0.6rem;
+    border: 1px solid var(--green-dim);
+    color: var(--green);
+  }
+
+  .cert-status.progress {
+    border-color: var(--purple-dim);
+    color: var(--purple-bright);
+  }
+
+  /* CONTACT */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .contact-intro {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+    margin-bottom: 2rem;
+  }
+
+  .contact-links { display: flex; flex-direction: column; gap: 1rem; }
+
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: border-color 0.2s;
+  }
+
+  .contact-link:hover { border-color: var(--purple-dim); }
+
+  .contact-link-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: block;
+  }
+
+  .contact-link-val {
+    font-size: 0.85rem;
+    color: var(--purple-bright);
+    display: block;
+    margin-top: 0.2rem;
+  }
+
+  .terminal-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--green);
+    padding: 1.5rem;
+    font-size: 0.8rem;
+    line-height: 2;
+  }
+
+  .terminal-line { color: var(--text-muted); }
+  .terminal-line .prompt { color: var(--green); }
+  .terminal-line .cmd { color: var(--text); }
+  .terminal-line .out { color: var(--purple-bright); }
+  .terminal-line .green { color: var(--green); }
+
+  /* FOOTER */
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 3rem 2rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  footer span { color: var(--purple-bright); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .about-grid, .contact-grid { grid-template-columns: 1fr; gap: 2rem; }
+    nav ul { display: none; }
+    .hero-stats { gap: 2rem; }
+  }
+
+  /* ANIMATED ENTRY */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="nav-brand">MFA<span>B</span></a>
+  <ul>
+    <li><a href="#about">About</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-status">
+    <div class="status-dot"></div>
+    SOC TRAINING // ACTIVE
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-prefix">&gt; INITIATING JACK-IN SEQUENCE...</div>
+  <h1 class="hero-name" data-text="MARC BROUWER">MARC BROUWER</h1>
+  <div class="hero-title">SOC ANALYST // CYBERSECURITY SPECIALIST</div>
+  <p class="hero-tagline">
+    20+ years of hands-on tech experience. Operational lead turned cyber defender.<br>
+    <span class="typing">Currently running hot through the OptiSec SOC Analyst program.</span><br>
+    Target: Government & Defense Security infrastructure.
+  </p>
+  <div class="hero-buttons">
+    <a href="#projects" class="btn btn-primary">View Projects</a>
+    <a href="#contact" class="btn btn-secondary">Open Channel</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-item">
+      <span class="stat-value">20+</span>
+      <span class="stat-label">Years in Tech</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value">CIR</span>
+      <span class="stat-label">Holland Code</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value">4.8</span>
+      <span class="stat-label">T-Shape Score</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value">AMS</span>
+      <span class="stat-label">Base of Operations</span>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" class="fade-up">
+  <div class="section-header">
+    <span class="section-num">01 //</span>
+    <h2 class="section-title">DECKER PROFILE</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="about-grid">
+    <div class="about-text">
+      <p>
+        I'm <span>Marc Brouwer</span> — an IT professional based in Amsterdam with over two decades of experience in operational management, customer service infrastructure, and technical support. My background includes hands-on work in large-scale IT environments, including roles at Ziggo.
+      </p>
+      <p>
+        Now I'm making my move. After years of building operational instincts and systems thinking, I'm channeling it into <span>cybersecurity</span>. The OptiSec SOC Analyst training program is my bridge — a 9-month trajectory built to put me in a Security Operations Center.
+      </p>
+      <p>
+        My goal is government or <span>defense security</span>. Where the stakes are real. Where the work matters. Where pattern recognition, calm under pressure, and 20 years of troubleshooting instincts actually count for something.
+      </p>
+      <p>
+        Holland code <span>CIR</span> — Conventional, Investigative, Realistic. Which means: I build systems, I dig for truth, and I get things done.
+      </p>
+    </div>
+    <div class="about-specs">
+      <div class="spec-row">
+        <span class="spec-key">// HANDLE</span>
+        <span class="spec-val">Marc F.A. Brouwer</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">// LOCATION</span>
+        <span class="spec-val">Amsterdam, NL</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">// CURRENT OP</span>
+        <span class="spec-val">OptiSec SOC Analyst</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">// START DATE</span>
+        <span class="spec-val">27 MAY 2026</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">// TARGET SECTOR</span>
+        <span class="spec-val">Gov / Defense</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">// HOLLAND CODE</span>
+        <span class="spec-val purple">CIR</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">// IQ RANGE</span>
+        <span class="spec-val purple">Exceptional — Abstract Reasoning</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">// T-SHAPE SCORE</span>
+        <span class="spec-val purple">4.6 – 4.8 all dimensions</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">// LANGUAGES</span>
+        <span class="spec-val">NL / EN</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills" class="fade-up">
+  <div class="section-header">
+    <span class="section-num">02 //</span>
+    <h2 class="section-title">SKILLSET MATRIX</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="skills-grid">
+    <div class="skill-card">
+      <div class="skill-card-title">Cybersecurity Core</div>
+      <div class="skill-item">
+        <div class="skill-header"><span class="skill-name">Threat Analysis</span><span class="skill-pct">training</span></div>
+        <div class="skill-bar"><div class="skill-fill" data-width="65"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-header"><span class="skill-name">SIEM / Log Analysis</span><span class="skill-pct">training</span></div>
+        <div class="skill-bar"><div class="skill-fill" data-width="55"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-header"><span class="skill-name">Security Architecture</span><span class="skill-pct">conceptual</span></div>
+        <div class="skill-bar"><div class="skill-fill" data-width="70"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-header"><span class="skill-name">Zero Trust Principles</span><span class="skill-pct">studying</span></div>
+        <div class="skill-bar"><div class="skill-fill" data-width="60"></div></div>
+      </div>
+    </div>
+
+    <div class="skill-card">
+      <div class="skill-card-title">Technical Foundation</div>
+      <div class="skill-item">
+        <div class="skill-header"><span class="skill-name">Networking / TCP-IP</span><span class="skill-pct">solid</span></div>
+        <div class="skill-bar"><div class="skill-fill" data-width="72"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-header"><span class="skill-name">Python</span><span class="skill-pct">growing</span></div>
+        <div class="skill-bar"><div class="skill-fill" data-width="45"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-header"><span class="skill-name">Linux / CLI</span><span class="skill-pct">functional</span></div>
+        <div class="skill-bar"><div class="skill-fill" data-width="58"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-header"><span class="skill-name">Docker / Containers</span><span class="skill-pct">learning</span></div>
+        <div class="skill-bar"><div class="skill-fill" data-width="40"></div></div>
+      </div>
+    </div>
+
+    <div class="skill-card">
+      <div class="skill-card-title">Operational Intelligence</div>
+      <div class="skill-item">
+        <div class="skill-header"><span class="skill-name">Incident Management</span><span class="skill-pct">experienced</span></div>
+        <div class="skill-bar"><div class="skill-fill" data-width="88"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-header"><span class="skill-name">Pattern Recognition</span><span class="skill-pct">exceptional</span></div>
+        <div class="skill-bar"><div class="skill-fill" data-width="95"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-header"><span class="skill-name">Documentation</span><span class="skill-pct">strong</span></div>
+        <div class="skill-bar"><div class="skill-fill" data-width="85"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-header"><span class="skill-name">Team Communication</span><span class="skill-pct">strong</span></div>
+        <div class="skill-bar"><div class="skill-fill" data-width="90"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap" class="fade-up">
+  <div class="section-header">
+    <span class="section-num">03 //</span>
+    <h2 class="section-title">CAREER TRAJECTORY</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="roadmap">
+    <div class="roadmap-item">
+      <div class="roadmap-dot done"></div>
+      <div class="roadmap-phase">Phase 0 — Complete</div>
+      <div class="roadmap-title">Operational IT &amp; Management</div>
+      <div class="roadmap-desc">20+ years in IT operations, customer service infrastructure, and operational management. Built systems, led teams, and developed the instincts that make a good analyst: pattern recognition, calm under pressure, and systematic thinking.</div>
+      <div class="roadmap-tags">
+        <span class="tag tag-muted">Ziggo IT</span>
+        <span class="tag tag-muted">Operational Management</span>
+        <span class="tag tag-muted">IT Support</span>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-dot active"></div>
+      <div class="roadmap-phase">Phase 1 — Active // May 2026</div>
+      <div class="roadmap-title">SOC Analyst Training — OptiSec</div>
+      <div class="roadmap-desc">9-month intensive SOC Analyst trajectory via OptiSec. Funded through municipality of Amsterdam. Covering SIEM, threat detection, incident response, and hands-on security operations practice. Recommended by Techgrounds Pathways.</div>
+      <div class="roadmap-tags">
+        <span class="tag tag-green">In Progress</span>
+        <span class="tag tag-purple">SIEM</span>
+        <span class="tag tag-purple">Threat Detection</span>
+        <span class="tag tag-purple">Incident Response</span>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-dot"></div>
+      <div class="roadmap-phase">Phase 2 — Planned // 2026–2027</div>
+      <div class="roadmap-title">Certification Stack</div>
+      <div class="roadmap-desc">Building the formal credential layer: AZ-900 (Azure fundamentals), SC-900 (Security fundamentals), ISC2 CC (Certified in Cybersecurity), and CDSA. Each cert is a stepping stone toward specialized security roles.</div>
+      <div class="roadmap-tags">
+        <span class="tag tag-muted">AZ-900</span>
+        <span class="tag tag-muted">SC-900</span>
+        <span class="tag tag-muted">ISC2 CC</span>
+        <span class="tag tag-muted">CDSA</span>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-dot"></div>
+      <div class="roadmap-phase">Phase 3 — Target // 2027+</div>
+      <div class="roadmap-title">SOC Analyst — Government / Defense</div>
+      <div class="roadmap-desc">First operational role in a Security Operations Center, with preference for government or defense sector. Where pattern recognition, 20 years of systems experience, and security training converge into something that matters.</div>
+      <div class="roadmap-tags">
+        <span class="tag tag-purple">Government</span>
+        <span class="tag tag-purple">Defense</span>
+        <span class="tag tag-purple">SOC L1/L2</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects" class="fade-up">
+  <div class="section-header">
+    <span class="section-num">04 //</span>
+    <h2 class="section-title">ACTIVE FILES</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="projects-grid">
+    <div class="project-card">
+      <div class="project-type">// Whitepaper — Security Architecture</div>
+      <div class="project-title">Autonomous Transport Hivemind — Defense Model</div>
+      <div class="project-desc">Conceptual security architecture for AI-coordinated autonomous transportation. Proposes a three-layer biological immune system model covering defense in depth, zero trust, automated containment, and air-gapped update pipelines.</div>
+      <div class="roadmap-tags" style="margin-bottom:1rem">
+        <span class="tag tag-purple">Zero Trust</span>
+        <span class="tag tag-purple">Defense in Depth</span>
+        <span class="tag tag-muted">Whitepaper</span>
+      </div>
+      <a href="https://mfabrouwer.github.io/Hello-World/projects/hivemind-transport-security.html" class="project-link" target="_blank">Read Whitepaper</a>
+    </div>
+
+    <div class="project-card">
+      <div class="project-type">// Python — CLI Tool</div>
+      <div class="project-title">Daily Schedule Tracker</div>
+      <div class="project-desc">First Python project — a CLI-based routine management tool. Built to sharpen core Python skills relevant to SOC work: input handling, conditional logic, datetime operations, and structured output. Foundation for more complex tooling.</div>
+      <div class="roadmap-tags" style="margin-bottom:1rem">
+        <span class="tag tag-green">Python</span>
+        <span class="tag tag-muted">CLI</span>
+        <span class="tag tag-muted">Open Source</span>
+      </div>
+      <a href="https://github.com/MFABrouwer/Daily-schedule-tracker" class="project-link" target="_blank">View Repository</a>
+    </div>
+
+    <div class="project-card">
+      <div class="project-type">// AI — Desktop Companion</div>
+      <div class="project-title">Project AIDA — AI Desktop Companion</div>
+      <div class="project-desc">Self-built AI desktop companion using Open-LLM-VTuber as base with VRM/3D character, Claude API integration, Google Calendar sync, voice output, and a 3D room environment. Exploring AI integration and voice interfaces.</div>
+      <div class="roadmap-tags" style="margin-bottom:1rem">
+        <span class="tag tag-purple">AI / LLM</span>
+        <span class="tag tag-green">Python</span>
+        <span class="tag tag-muted">Three.js</span>
+        <span class="tag tag-muted">In Progress</span>
+      </div>
+      <a href="https://github.com/MFABrouwer" class="project-link" target="_blank">View GitHub</a>
+    </div>
+  </div>
+
+  <div style="margin-top: 3rem;">
+    <div class="section-header" style="margin-bottom:1.5rem">
+      <span class="section-num" style="font-size:0.7rem">CERTIFICATION QUEUE</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="cert-grid">
+      <div class="cert-item"><span class="cert-name">AZ-900</span><span class="cert-status progress">Planned</span></div>
+      <div class="cert-item"><span class="cert-name">SC-900</span><span class="cert-status progress">Planned</span></div>
+      <div class="cert-item"><span class="cert-name">ISC2 CC</span><span class="cert-status progress">Planned</span></div>
+      <div class="cert-item"><span class="cert-name">CDSA</span><span class="cert-status progress">Planned</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="fade-up">
+  <div class="section-header">
+    <span class="section-num">05 //</span>
+    <h2 class="section-title">OPEN CHANNEL</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="contact-grid">
+    <div>
+      <p class="contact-intro">
+        Currently running the OptiSec SOC Analyst track and building toward a first role in government or defense security. Open to conversations about security, career opportunities post-training, or just good infosec talk.
+      </p>
+      <div class="contact-links">
+        <a href="https://github.com/MFABrouwer" target="_blank" class="contact-link">
+          <div>
+            <span class="contact-link-label">// GitHub</span>
+            <span class="contact-link-val">github.com/MFABrouwer</span>
+          </div>
+        </a>
+        <a href="https://www.linkedin.com/in/marc-brouwer-a1916517/" target="_blank" class="contact-link">
+          <div>
+            <span class="contact-link-label">// LinkedIn</span>
+            <span class="contact-link-val">linkedin.com/in/marc-brouwer-a1916517</span>
+          </div>
+        </a>
+      </div>
+    </div>
+    <div class="terminal-box">
+      <div class="terminal-line"><span class="prompt">&gt; </span><span class="cmd">whoami</span></div>
+      <div class="terminal-line"><span class="out">marc_brouwer // amsterdam.nl</span></div>
+      <div class="terminal-line">&nbsp;</div>
+      <div class="terminal-line"><span class="prompt">&gt; </span><span class="cmd">status --current</span></div>
+      <div class="terminal-line"><span class="green">[ ACTIVE ]</span> SOC Analyst Training</div>
+      <div class="terminal-line"><span class="green">[ ACTIVE ]</span> Project AIDA — build</div>
+      <div class="terminal-line"><span class="green">[ ACTIVE ]</span> Cert stack — planning</div>
+      <div class="terminal-line">&nbsp;</div>
+      <div class="terminal-line"><span class="prompt">&gt; </span><span class="cmd">target --sector</span></div>
+      <div class="terminal-line"><span class="out">government // defense // SOC</span></div>
+      <div class="terminal-line">&nbsp;</div>
+      <div class="terminal-line"><span class="prompt">&gt; </span><span class="cmd">availability</span></div>
+      <div class="terminal-line"><span class="green">[ OPEN ]</span> Post-training 2027</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 <span>Marc F.A. Brouwer</span> — All content and code available for reference and learning.</p>
+  <p style="margin-top:0.5rem; font-size:0.65rem; opacity:0.4">// jack out //</p>
+</footer>
+
+<script>
+// Matrix rain
+const canvas = document.getElementById('matrix-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+const cols = Math.floor(canvas.width / 16);
+const drops = Array(cols).fill(1);
+const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEF';
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(7,7,15,0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#00ff41';
+  ctx.font = '13px Share Tech Mono';
+  drops.forEach((y, i) => {
+    const char = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillText(char, i * 16, y * 16);
+    if (y * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  });
+}
+setInterval(drawMatrix, 60);
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+// Skill bar animation
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      entry.target.querySelectorAll('.skill-fill').forEach(bar => {
+        bar.style.width = bar.dataset.width + '%';
+      });
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
