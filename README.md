@@ -16,7 +16,7 @@ Personal portfolio website showcasing my journey from IT Support to Cybersecurit
 ### 📄 Autonomous Transport Hivemind — Security Architecture
 A conceptual whitepaper proposing a three-layer defense model for AI-coordinated autonomous transportation, inspired by biological immune systems. Covers defense in depth, zero trust, automated containment, and air-gapped update pipelines.
 
-→ [Read the whitepaper](https://mfabrouwer.github.io/Hello-World/projects/hivemind-transport-security.html)
+→ [Read the whitepaper](https://mfabrouwer.github.io/HiveMind-Transport-Security/hivemind-transport-security.html)
 
 ### 🐍 Daily Schedule Tracker
 My first Python project — a CLI tool for managing daily routines. Built to practice core Python skills needed for SOC Analyst work: input handling, conditional logic, and datetime operations.
